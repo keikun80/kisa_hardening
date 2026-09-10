@@ -6,7 +6,7 @@
 # ==============================================================================
 
 - name: KISA 2026 Security Hardening for AWS EC2 Linux/Unix Instances
-  hosts: target_servers:localhost
+  hosts: "{{ target_hosts | default('all') }}"
   become: true
   gather_facts: true
 

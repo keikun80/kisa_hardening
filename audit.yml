@@ -4,7 +4,7 @@
 # ==============================================================================
 
 - name: Audit KISA Vulnerabilities on Target Hosts
-  hosts: target_servers:localhost
+  hosts: "{{ target_hosts | default('all') }}"
   become: true
   gather_facts: true
 
