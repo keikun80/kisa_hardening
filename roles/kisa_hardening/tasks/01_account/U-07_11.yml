@@ -1,0 +1,73 @@
+---
+# U-07: 불필요한 계정 제거 / 잠금
+# 기준: 불필요하거나 미사용 기본 계정 비활성화
+
+- name: "[U-07] Lock default unnecessary system accounts if present"
+  ansible.builtin.user:
+    name: "{{ item }}"
+    password_lock: true
+    shell: "{{ '/usr/sbin/nologin' if ansible_os_family == 'Debian' else '/sbin/nologin' }}"
+  loop:
+    - lp
+    - uucp
+    - nuucp
+    - games
+    - gopher
+  ignore_errors: true
+  tags:
+    - U-07
+    - account
+
+# U-08: 관리자 그룹에 최소한의 계정 포함
+- name: "[U-08] Check root group membership"
+  ansible.builtin.shell:
+    cmd: "grep '^root:' /etc/group | cut -d: -f4"
+  register: root_group_members
+  changed_when: false
+  failed_when: false
+  tags:
+    - U-08
+    - account
+
+# U-09: 계정이 존재하지 않는 GID 금지
+- name: "[U-09] Check GID integrity"
+  ansible.builtin.command: grpck -r
+  register: grpck_result
+  changed_when: false
+  failed_when: false
+  tags:
+    - U-09
+    - account
+
+# U-10: 동일한 UID 금지
+- name: "[U-10] Check duplicate UID"
+  ansible.builtin.shell:
+    cmd: "awk -F: '{print $3}' /etc/passwd | sort | uniq -d"
+  register: duplicate_uids
+  changed_when: false
+  failed_when: false
+  tags:
+    - U-10
+    - account
+
+- name: "[U-10] Assert no duplicate UID exists"
+  ansible.builtin.assert:
+    that:
+      - duplicate_uids.stdout == ""
+    fail_msg: "CRITICAL: Duplicate UID detected in /etc/passwd: {{ duplicate_uids.stdout_lines }}"
+    success_msg: "No duplicate UIDs found."
+  tags:
+    - U-10
+    - account
+
+# U-11: 사용자 Shell 점검
+# 기준: 시스템 데몬 계정의 쉘을 /sbin/nologin or /usr/sbin/nologin or /bin/false 설정
+- name: "[U-11] Ensure system accounts have nologin shell"
+  ansible.builtin.user:
+    name: "{{ item }}"
+    shell: "{{ '/usr/sbin/nologin' if ansible_os_family == 'Debian' else ('/usr/sbin/nologin' if ansible_system == 'FreeBSD' else '/sbin/nologin') }}"
+  loop: "{{ restricted_system_users | default(['daemon', 'bin', 'sys', 'adm', 'listen', 'nobody', 'nobody4', 'noaccess', 'diag', 'operator', 'games', 'gopher']) }}"
+  ignore_errors: true
+  tags:
+    - U-11
+    - account

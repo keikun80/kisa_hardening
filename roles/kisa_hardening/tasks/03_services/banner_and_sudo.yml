@@ -1,0 +1,37 @@
+---
+# U-62: 로그인 시 경고 메시지 설정
+# U-63: sudo 명령어 접근 관리
+
+# U-62: motd, issue, issue.net 배너 적용
+- name: "[U-62] Deploy legal warning banner to /etc/motd, /etc/issue, /etc/issue.net"
+  ansible.builtin.template:
+    src: motd.j2
+    dest: "{{ item }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0644'
+  loop:
+    - /etc/motd
+    - /etc/issue
+    - /etc/issue.net
+  tags: [U-62, services, banner]
+
+# U-63: /etc/sudoers 및 /etc/sudoers.d 권한 설정 (0440, root:root)
+- name: "[U-63] Secure /etc/sudoers permissions (0440, root:root)"
+  ansible.builtin.file:
+    path: /etc/sudoers
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0440'
+    validate: '/usr/sbin/visudo -cf %s'
+  tags: [U-63, services, sudo]
+
+- name: "[U-63] Secure /etc/sudoers.d directory and files permissions"
+  ansible.builtin.file:
+    path: /etc/sudoers.d
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0750'
+    state: directory
+  ignore_errors: true
+  tags: [U-63, services, sudo]

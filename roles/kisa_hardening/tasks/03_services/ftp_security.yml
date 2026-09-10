@@ -1,0 +1,42 @@
+---
+# U-35, U-53, U-55, U-56, U-57: FTP 서비스 보안 설정
+
+# U-35, U-53: vsftpd 설정 보완 (익명 금지, 배너 숨김)
+- name: "[U-35, U-53] Harden vsftpd.conf if present"
+  ansible.builtin.lineinfile:
+    path: "{{ item.path }}"
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }}={{ item.val }}"
+    state: present
+  loop:
+    - { path: "/etc/vsftpd/vsftpd.conf", key: "anonymous_enable", val: "NO" }
+    - { path: "/etc/vsftpd/vsftpd.conf", key: "ftpd_banner", val: "Authorized Users Only" }
+    - { path: "/etc/vsftpd.conf", key: "anonymous_enable", val: "NO" }
+    - { path: "/etc/vsftpd.conf", key: "ftpd_banner", val: "Authorized Users Only" }
+  ignore_errors: true
+  tags: [U-35, U-53, services, ftp]
+
+# U-55: ftp 계정 쉘 제한
+- name: "[U-55] Restrict shell for ftp user"
+  ansible.builtin.user:
+    name: ftp
+    shell: "{{ '/usr/sbin/nologin' if ansible_os_family == 'Debian' else '/sbin/nologin' }}"
+  ignore_errors: true
+  tags: [U-55, services, ftp]
+
+# U-56, U-57: ftpusers 파일에 root 추가 (root 차단)
+- name: "[U-56, U-57] Ensure root is listed in ftpusers to deny root login"
+  ansible.builtin.lineinfile:
+    path: "{{ item }}"
+    line: "root"
+    create: true
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0600'
+  loop:
+    - /etc/ftpusers
+    - /etc/vsftpd/ftpusers
+    - /etc/vsftpd.ftpusers
+    - /etc/vsftpd/user_list
+  ignore_errors: true
+  tags: [U-56, U-57, services, ftp]

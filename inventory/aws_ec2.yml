@@ -1,0 +1,46 @@
+---
+# AWS EC2 Dynamic Inventory Plugin Configuration
+# 파일 확장자는 반드시 aws_ec2.yml 또는 aws_ec2.yaml 이어야 합니다.
+plugin: amazon.aws.aws_ec2
+
+# 검색할 AWS 리전 (필요에 따라 수정)
+regions:
+  - ap-northeast-2
+  # - us-east-1
+
+# 실행 중인(running) 인스턴스만 필터링
+filters:
+  instance-state-name: running
+
+# 인스턴스 접속 호스트명 지정 (퍼블릭 IP 또는 프라이빗 IP)
+# VPC 내부나 VPN/Bastion 환경일 경우 private_ip_address 권장
+hostnames:
+  - tag:Name
+  - private-ip-address
+  - ip-address
+
+# 태그(Tag) 및 플랫폼 속성에 따라 인벤토리 그룹 자동 생성
+keyed_groups:
+  # 1. EC2 태그 중 'OS' 또는 'os' 기준 그룹화 (예: amazon_linux, ubuntu, rocky 등)
+  - key: tags.OS | default(tags.os | default('unknown_os'))
+    prefix: ""
+    separator: ""
+
+  # 2. EC2 태그 중 'Environment' 기준 그룹화 (예: dev, prod, staging)
+  - key: tags.Environment | default('default_env')
+    prefix: env
+
+  # 3. 플랫폼/아키텍처 기준 그룹화
+  - key: architecture
+    prefix: arch
+
+# OS별 기본 SSH 접속 사용자 자동 매핑
+compose:
+  ansible_host: private_ip_address | default(public_ip_address)
+  ansible_user: >
+    (tags.OS | default('') | lower in ['ubuntu']) | ternary('ubuntu',
+    (tags.OS | default('') | lower in ['debian']) | ternary('admin',
+    (tags.OS | default('') | lower in ['fedora']) | ternary('fedora',
+    (tags.OS | default('') | lower in ['rocky']) | ternary('rocky',
+    (tags.OS | default('') | lower in ['centos']) | ternary('centos',
+    (tags.OS | default('') | lower in ['freebsd']) | ternary('ec2-user', 'ec2-user'))))))

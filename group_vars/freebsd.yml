@@ -1,0 +1,10 @@
+---
+# FreeBSD 전용 변수
+
+os_package_manager: "pkg"
+ntp_service_name: "ntpd"
+ntp_config_file: "/etc/ntp.conf"
+syslog_service_name: "syslogd"
+syslog_config_file: "/etc/syslog.conf"
+su_auth_group: "wheel"
+login_defs_path: "/etc/login.conf"

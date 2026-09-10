@@ -1,0 +1,95 @@
+---
+# U-34, U-36, U-38, U-39, U-41, U-42, U-43, U-44, U-52, U-54, U-58: 불필요한 취약 서비스 비활성화
+
+- name: "[Services] Disable and stop legacy/insecure systemd services (Linux)"
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop:
+    - finger.socket
+    - finger.service
+    - rsh.socket
+    - rsh.service
+    - rlogin.socket
+    - rlogin.service
+    - rexec.socket
+    - rexec.service
+    - echo.socket
+    - echo-udp.socket
+    - discard.socket
+    - discard-udp.socket
+    - daytime.socket
+    - daytime-udp.socket
+    - chargen.socket
+    - chargen-udp.socket
+    - nfs.service
+    - nfs-server.service
+    - autofs.service
+    - rpcbind.service
+    - rpcbind.socket
+    - ypserv.service
+    - ypbind.service
+    - tftp.socket
+    - tftp.service
+    - talk.service
+    - ntalk.service
+    - telnet.socket
+    - telnet.service
+    - vsftpd.service
+    - snmpd.service
+  when: ansible_system != 'FreeBSD'
+  ignore_errors: true
+  tags:
+    - U-34
+    - U-36
+    - U-38
+    - U-39
+    - U-41
+    - U-42
+    - U-43
+    - U-44
+    - U-52
+    - U-54
+    - U-58
+    - services
+
+- name: "[Services] Disable services in /etc/inetd.conf or /etc/xinetd.d (if present)"
+  ansible.builtin.replace:
+    path: "{{ item }}"
+    regexp: 'disable\s*=\s*no'
+    replace: 'disable = yes'
+  loop:
+    - /etc/xinetd.d/echo
+    - /etc/xinetd.d/discard
+    - /etc/xinetd.d/daytime
+    - /etc/xinetd.d/chargen
+    - /etc/xinetd.d/tftp
+    - /etc/xinetd.d/talk
+    - /etc/xinetd.d/ntalk
+    - /etc/xinetd.d/finger
+  ignore_errors: true
+  tags:
+    - U-38
+    - U-44
+    - services
+
+- name: "[Services] Disable insecure services on FreeBSD"
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    regexp: "^{{ item }}_enable="
+    line: '{{ item }}_enable="NO"'
+    state: present
+  loop:
+    - inetd
+    - rpcbind
+    - nfs_server
+    - ypserv
+    - ypbind
+    - snmpd
+    - ftpd
+  when: ansible_system == 'FreeBSD'
+  ignore_errors: true
+  tags:
+    - services

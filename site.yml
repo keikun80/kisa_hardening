@@ -1,0 +1,14 @@
+---
+# ==============================================================================
+# KISA Linux/Unix 취약점 보안 하드닝 통합 플레이북 (site.yml)
+# 대상: Amazon Linux 2023, Fedora, RHEL, Rocky, CentOS, Debian, Ubuntu, FreeBSD
+# 환경: AWS EC2
+# ==============================================================================
+
+- name: KISA 2026 Security Hardening for AWS EC2 Linux/Unix Instances
+  hosts: target_servers:localhost
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: kisa_hardening

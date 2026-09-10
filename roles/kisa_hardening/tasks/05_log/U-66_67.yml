@@ -1,0 +1,39 @@
+---
+# U-66: 정책에 따른 시스템 로깅 설정
+# U-67: 로그 디렉터리 소유자 및 권한 설정
+
+# U-66: rsyslog 서비스 설치 및 활성화
+- name: "[U-66] Install rsyslog package (Linux)"
+  ansible.builtin.package:
+    name: rsyslog
+    state: present
+  when: ansible_system != 'FreeBSD'
+  ignore_errors: true
+  tags: [U-66, log]
+
+- name: "[U-66] Ensure rsyslog is enabled and running (Linux)"
+  ansible.builtin.service:
+    name: "{{ syslog_service_name | default('rsyslog') }}"
+    state: started
+    enabled: true
+  when: ansible_system != 'FreeBSD'
+  ignore_errors: true
+  tags: [U-66, log]
+
+- name: "[U-66] Ensure FreeBSD syslogd is enabled in /etc/rc.conf"
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    regexp: '^syslogd_enable='
+    line: 'syslogd_enable="YES"'
+    state: present
+  when: ansible_system == 'FreeBSD'
+  tags: [U-66, log]
+
+# U-67: /var/log 디렉토리 권한 755 이하 및 소유자 root
+- name: "[U-67] Secure /var/log directory permissions (755 or 750)"
+  ansible.builtin.file:
+    path: /var/log
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0755'
+  tags: [U-67, log]

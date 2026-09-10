@@ -1,0 +1,30 @@
+---
+# U-64: 주기적 보안 패치 및 벤더 권고사항 적용
+
+- name: "[U-64] Apply security updates (RedHat / AL2023 / Fedora / Rocky)"
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    security: true
+    update_cache: true
+  when:
+    - ansible_os_family == 'RedHat'
+    - enable_patch_hardening | default(false) | bool
+  tags: [U-64, patch]
+
+- name: "[U-64] Apply security updates (Debian / Ubuntu)"
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+  when:
+    - ansible_os_family == 'Debian'
+    - enable_patch_hardening | default(false) | bool
+  tags: [U-64, patch]
+
+- name: "[U-64] Apply security updates (FreeBSD)"
+  ansible.builtin.command: "pkg upgrade -y"
+  when:
+    - ansible_system == 'FreeBSD'
+    - enable_patch_hardening | default(false) | bool
+  changed_when: true
+  tags: [U-64, patch]

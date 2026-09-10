@@ -1,0 +1,8 @@
+# AWS EC2 Chrony Configuration for KISA U-65
+# Use AWS Time Sync Service IP: 169.254.169.123
+server {{ aws_ntp_server | default('169.254.169.123') }} prefer iburst minpoll 4 maxpoll 4
+
+driftfile /var/lib/chrony/drift
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony

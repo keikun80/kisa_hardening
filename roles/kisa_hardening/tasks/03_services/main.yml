@@ -1,0 +1,26 @@
+---
+# 03. 서비스 관리 (U-34 ~ U-63)
+
+- name: "[Domain: Services] Include Legacy / Insecure Services (U-34, 36, 38, 39, 41~44, 52, 54, 58)"
+  ansible.builtin.include_tasks: legacy_services.yml
+  tags: [U-34, U-36, U-38, U-39, U-41, U-42, U-43, U-44, U-52, U-54, U-58, services]
+
+- name: "[Domain: Services] Include Cron and NFS (U-37, U-40)"
+  ansible.builtin.include_tasks: cron_and_rpc.yml
+  tags: [U-37, U-40, services]
+
+- name: "[Domain: Services] Include Mail and DNS (U-45 ~ U-51)"
+  ansible.builtin.include_tasks: mail_and_dns.yml
+  tags: [U-45, U-46, U-47, U-48, U-49, U-50, U-51, services]
+
+- name: "[Domain: Services] Include FTP Security (U-35, U-53, U-55, U-56, U-57)"
+  ansible.builtin.include_tasks: ftp_security.yml
+  tags: [U-35, U-53, U-55, U-56, U-57, services]
+
+- name: "[Domain: Services] Include SNMP Security (U-59, U-60, U-61)"
+  ansible.builtin.include_tasks: snmp_security.yml
+  tags: [U-59, U-60, U-61, services]
+
+- name: "[Domain: Services] Include Legal Banner and Sudo (U-62, U-63)"
+  ansible.builtin.include_tasks: banner_and_sudo.yml
+  tags: [U-62, U-63, services]

@@ -1,0 +1,6 @@
+---
+# 04. 패치 관리 (U-64)
+
+- name: "[Domain: Patch] Include U-64"
+  ansible.builtin.include_tasks: U-64.yml
+  tags: [U-64, patch]

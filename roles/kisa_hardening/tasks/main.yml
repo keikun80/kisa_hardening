@@ -1,0 +1,28 @@
+---
+# roles/kisa_hardening/tasks/main.yml
+# KISA 2026 가이드라인 기반 Linux/Unix 서버 보안 하드닝 메인 태스크
+
+- name: "[KISA] 01. 계정 관리 하드닝 (U-01 ~ U-13)"
+  ansible.builtin.include_tasks: 01_account/main.yml
+  when: enable_account_hardening | default(true) | bool
+  tags: [domain_account, account]
+
+- name: "[KISA] 02. 파일 및 디렉토리 관리 하드닝 (U-14 ~ U-33)"
+  ansible.builtin.include_tasks: 02_filesystem/main.yml
+  when: enable_filesystem_hardening | default(true) | bool
+  tags: [domain_filesystem, filesystem]
+
+- name: "[KISA] 03. 서비스 관리 하드닝 (U-34 ~ U-63)"
+  ansible.builtin.include_tasks: 03_services/main.yml
+  when: enable_services_hardening | default(true) | bool
+  tags: [domain_services, services]
+
+- name: "[KISA] 04. 패치 관리 (U-64)"
+  ansible.builtin.include_tasks: 04_patch/main.yml
+  when: enable_patch_hardening | default(false) | bool
+  tags: [domain_patch, patch]
+
+- name: "[KISA] 05. 로그 관리 하드닝 (U-65 ~ U-67)"
+  ansible.builtin.include_tasks: 05_log/main.yml
+  when: enable_log_hardening | default(true) | bool
+  tags: [domain_log, log]

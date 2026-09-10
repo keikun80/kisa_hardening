@@ -1,0 +1,22 @@
+---
+# 02. 파일 및 디렉토리 관리 (U-14 ~ U-33)
+
+- name: "[Domain: Filesystem] Include File Permissions (U-16 ~ U-22, U-29)"
+  ansible.builtin.include_tasks: file_permissions.yml
+  tags: [U-16, U-17, U-18, U-19, U-20, U-21, U-22, U-29, filesystem]
+
+- name: "[Domain: Filesystem] Include Path, Env and UMASK (U-14, U-24, U-30)"
+  ansible.builtin.include_tasks: path_and_env.yml
+  tags: [U-14, U-24, U-30, filesystem]
+
+- name: "[Domain: Filesystem] Include File Audits (U-15, U-23, U-25, U-26, U-33)"
+  ansible.builtin.include_tasks: audit_files.yml
+  tags: [U-15, U-23, U-25, U-26, U-33, filesystem]
+
+- name: "[Domain: Filesystem] Include Access Control (U-27, U-28)"
+  ansible.builtin.include_tasks: access_control.yml
+  tags: [U-27, U-28, filesystem]
+
+- name: "[Domain: Filesystem] Include Home Directory Checks (U-31, U-32)"
+  ansible.builtin.include_tasks: home_directories.yml
+  tags: [U-31, U-32, filesystem]

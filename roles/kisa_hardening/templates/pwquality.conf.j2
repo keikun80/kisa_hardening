@@ -1,0 +1,10 @@
+# Configuration for pam_pwquality module (KISA U-02)
+minlen = {{ password_min_length | default(8) }}
+dcredit = -{{ password_min_digits | default(1) }}
+ucredit = -{{ password_min_upper | default(1) }}
+lcredit = -{{ password_min_lower | default(1) }}
+ocredit = -{{ password_min_special | default(1) }}
+minclass = 3
+maxrepeat = 3
+maxclassrepeat = 3
+gecoscheck = 1

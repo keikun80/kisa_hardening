@@ -1,0 +1,36 @@
+---
+# roles/kisa_hardening/defaults/main.yml
+
+# 기본 플래그: 특정 도메인별 활성화 여부
+enable_account_hardening: true
+enable_filesystem_hardening: true
+enable_services_hardening: true
+enable_patch_hardening: false  # 기본값은 안전을 위해 false (선택 실행)
+enable_log_hardening: true
+
+# 백업 설정
+backup_original_files: true
+
+# 계정 보안 기본값
+allowed_su_users:
+  - ec2-user
+  - ubuntu
+  - rocky
+  - fedora
+  - centos
+  - admin
+
+# 시스템 계정 로그인 차단 목록
+restricted_system_users:
+  - daemon
+  - bin
+  - sys
+  - adm
+  - listen
+  - nobody
+  - nobody4
+  - noaccess
+  - diag
+  - operator
+  - games
+  - gopher

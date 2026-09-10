@@ -1,0 +1,50 @@
+---
+# U-14: root 홈, 패스 디렉터리 권한 및 패스 설정
+# U-24: 사용자, 시스템 환경변수 파일 소유자 및 권한 설정
+# U-30: UMASK 설정 관리 (022)
+
+# U-14 & U-24: 시스템 환경변수 파일 권한 644 이하 및 root 소유
+- name: "[U-24] Secure system environment file permissions"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0644'
+  loop:
+    - /etc/profile
+    - /etc/bashrc
+    - /etc/bash.bashrc
+    - /etc/csh.cshrc
+    - /etc/csh.login
+  ignore_errors: true
+  tags: [U-14, U-24, filesystem]
+
+# U-30: UMASK 설정
+- name: "[U-30] Configure UMASK 022 in /etc/profile"
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    regexp: '^[#\s]*umask\s+.*'
+    line: "umask {{ system_umask | default('022') }}"
+    state: present
+  tags: [U-30, filesystem]
+
+- name: "[U-30] Configure UMASK 022 in /etc/bashrc or /etc/bash.bashrc if present"
+  ansible.builtin.lineinfile:
+    path: "{{ item }}"
+    regexp: '^[#\s]*umask\s+.*'
+    line: "umask {{ system_umask | default('022') }}"
+    state: present
+  loop:
+    - /etc/bashrc
+    - /etc/bash.bashrc
+  ignore_errors: true
+  tags: [U-30, filesystem]
+
+- name: "[U-30] Configure UMASK in /etc/login.defs (Linux)"
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^[#\s]*UMASK\s+.*'
+    line: "UMASK           {{ system_umask | default('022') }}"
+    state: present
+  when: ansible_system != 'FreeBSD'
+  tags: [U-30, filesystem]

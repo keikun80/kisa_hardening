@@ -1,0 +1,58 @@
+---
+# U-03: 계정 잠금 임계값 설정
+# 기준: 10회 이하 (권장 5회), 잠금 시간 900초(15분)
+
+- name: "[U-03] Configure /etc/security/faillock.conf if present"
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} = {{ item.val }}"
+    state: present
+    create: false
+  loop:
+    - { key: "deny", val: "{{ account_lockout_deny | default(5) }}" }
+    - { key: "unlock_time", val: "{{ account_lockout_unlock_time | default(900) }}" }
+    - { key: "fail_interval", val: "{{ account_lockout_fail_interval | default(900) }}" }
+  when: ansible_system != 'FreeBSD'
+  ignore_errors: true
+  tags:
+    - U-03
+    - account
+    - lockout
+
+- name: "[U-03] Check authselect availability on RedHat/AL2023/Fedora/Rocky"
+  ansible.builtin.command: authselect current
+  register: authselect_status
+  changed_when: false
+  failed_when: false
+  when: ansible_os_family == 'RedHat'
+  tags:
+    - U-03
+    - account
+    - lockout
+
+- name: "[U-03] Enable faillock via authselect (RedHat family with authselect)"
+  ansible.builtin.command: authselect enable-feature with-faillock
+  when:
+    - ansible_os_family == 'RedHat'
+    - authselect_status.rc is defined and authselect_status.rc == 0
+  changed_when: true
+  failed_when: false
+  tags:
+    - U-03
+    - account
+    - lockout
+
+- name: "[U-03] Ensure pam_faillock in common-auth (Debian/Ubuntu fallback)"
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/common-auth
+    line: "auth required pam_faillock.so preauth silent deny={{ account_lockout_deny | default(5) }} unlock_time={{ account_lockout_unlock_time | default(900) }}"
+    insertbefore: "^auth.*pam_unix.so"
+    state: present
+  when:
+    - ansible_os_family == 'Debian'
+  ignore_errors: true
+  tags:
+    - U-03
+    - account
+    - lockout

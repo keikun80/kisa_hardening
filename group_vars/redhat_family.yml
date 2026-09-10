@@ -1,0 +1,11 @@
+---
+# RedHat 계열 (Amazon Linux 2023, Fedora, RHEL, Rocky, CentOS) 전용 변수
+
+os_package_manager: "dnf"
+ntp_service_name: "chronyd"
+ntp_config_file: "/etc/chrony.conf"
+syslog_service_name: "rsyslog"
+syslog_config_file: "/etc/rsyslog.conf"
+su_auth_group: "wheel"
+pwquality_config_file: "/etc/security/pwquality.conf"
+login_defs_path: "/etc/login.defs"

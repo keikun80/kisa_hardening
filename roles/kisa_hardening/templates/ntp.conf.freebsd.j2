@@ -1,0 +1,6 @@
+# AWS EC2 FreeBSD NTP Configuration for KISA U-65
+server {{ aws_ntp_server | default('169.254.169.123') }} iburst
+driftfile /var/db/ntp.drift
+restrict default kod nomodify notrap nopeer noquery
+restrict 127.0.0.1
+restrict ::1

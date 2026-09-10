@@ -1,0 +1,27 @@
+---
+# U-37: crontab 설정파일 권한 설정
+# U-40: NFS 접근 통제
+
+# U-37: cron.allow / cron.deny 권한 관리
+- name: "[U-37] Secure cron.allow and cron.deny file permissions (640, root:root)"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0640'
+  loop:
+    - /etc/cron.allow
+    - /etc/cron.deny
+    - /etc/at.allow
+    - /etc/at.deny
+  ignore_errors: true
+  tags: [U-37, services]
+
+# U-40: NFS /etc/exports 점검
+- name: "[U-40] Check NFS exports for wildcard access"
+  ansible.builtin.command: "grep -E '\\s+\\*' /etc/exports"
+  register: nfs_wildcard_check
+  changed_when: false
+  failed_when: false
+  ignore_errors: true
+  tags: [U-40, services]

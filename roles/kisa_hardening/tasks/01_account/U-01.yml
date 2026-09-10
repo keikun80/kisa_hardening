@@ -1,0 +1,47 @@
+---
+# U-01: root 계정 원격 접속 제한
+# 기준: SSH PermitRootLogin no 설정 및 /etc/securetty 내 pts/x 제거
+
+- name: "[U-01] Ensure PermitRootLogin is disabled in sshd_config"
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^[#\s]*PermitRootLogin\s+.*'
+    line: "PermitRootLogin {{ sshd_permit_root_login | default('no') }}"
+    state: present
+    backup: "{{ backup_original_files | default(true) }}"
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify:
+    - Restart sshd (Linux)
+    - Restart sshd (FreeBSD)
+  tags:
+    - U-01
+    - account
+    - ssh
+
+- name: "[U-01] Ensure /etc/ssh/sshd_config.d/ drop-in configs disable root login if directory exists"
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config.d/01-permitrootlogin.conf
+    line: "PermitRootLogin {{ sshd_permit_root_login | default('no') }}"
+    create: true
+    mode: '0600'
+    owner: root
+  when:
+    - ansible_system != 'FreeBSD'
+    - ansible_distribution in ['Ubuntu', 'Debian', 'Fedora', 'Amazon', 'Rocky', 'RedHat', 'CentOS']
+  notify:
+    - Restart sshd (Linux)
+  tags:
+    - U-01
+    - account
+    - ssh
+
+- name: "[U-01] Restrict pts from /etc/securetty if file exists"
+  ansible.builtin.lineinfile:
+    path: /etc/securetty
+    regexp: '^pts/'
+    state: absent
+  when: ansible_system != 'FreeBSD'
+  ignore_errors: true
+  tags:
+    - U-01
+    - account

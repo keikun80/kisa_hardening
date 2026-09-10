@@ -1,0 +1,26 @@
+---
+# U-45 ~ U-48: 메일 서비스 보안 설정
+# U-49 ~ U-51: DNS 서비스 보안 설정
+
+# U-46, U-47, U-48: Sendmail 보안 옵션 점검 및 적용
+- name: "[U-46, U-48] Configure sendmail.cf PrivacyOptions if sendmail is installed"
+  ansible.builtin.lineinfile:
+    path: /etc/mail/sendmail.cf
+    regexp: '^[#\s]*O PrivacyOptions=.*'
+    line: "O PrivacyOptions=authwarnings,noexpn,novrfy,restrictqrun,goaway"
+    state: present
+  ignore_errors: true
+  tags: [U-46, U-47, U-48, services, mail]
+
+# U-50, U-51: DNS Zone Transfer 및 Dynamic Update 제한 (named.conf)
+- name: "[U-50, U-51] Secure named.conf options (allow-transfer, allow-update)"
+  ansible.builtin.lineinfile:
+    path: /etc/named.conf
+    regexp: "^{{ item.key }}"
+    line: "    {{ item.line }}"
+    state: present
+  loop:
+    - { key: "allow-transfer", line: "allow-transfer { none; };" }
+    - { key: "allow-update", line: "allow-update { none; };" }
+  ignore_errors: true
+  tags: [U-50, U-51, services, dns]

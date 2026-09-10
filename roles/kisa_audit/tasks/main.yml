@@ -1,0 +1,56 @@
+---
+# roles/kisa_audit/tasks/main.yml
+# KISA 취약점 점검 및 진단 보고서 생성 태스크
+
+- name: "[Audit] Copy vulnerability check script to target host"
+  ansible.builtin.copy:
+    src: vulnerability_check_sh.sh
+    dest: "{{ kisa_script_path }}"
+    mode: '0755'
+    owner: root
+
+- name: "[Audit] Execute KISA vulnerability diagnosis script"
+  ansible.builtin.command:
+    cmd: "sh {{ kisa_script_path }}"
+  register: audit_execution_output
+  changed_when: false
+  failed_when: false
+
+- name: "[Audit] Fetch detailed report from target host"
+  ansible.builtin.shell:
+    cmd: "cat $(ls -t vulnerability_detailed_report_*.txt | head -1)"
+  register: detailed_report_content
+  changed_when: false
+  failed_when: false
+
+- name: "[Audit] Create local report directory"
+  ansible.builtin.file:
+    path: "./reports"
+    state: directory
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: "[Audit] Save diagnosis report locally"
+  ansible.builtin.copy:
+    content: |
+      # KISA 취약점 점검 결과 보고서 (호스트: {{ inventory_hostname }})
+      - 점검 일시: {{ ansible_date_time.iso8601 | default('N/A') }}
+      - 대상 OS: {{ ansible_distribution }} {{ ansible_distribution_version }} ({{ ansible_os_family }})
+      - 커널 버전: {{ ansible_kernel }}
+      
+      ## 상세 점검 결과
+      ```text
+      {{ detailed_report_content.stdout | default('보고서 출력 없음') }}
+      ```
+    dest: "{{ audit_report_dest }}"
+  delegate_to: localhost
+  become: false
+
+- name: "[Audit] Clean up temporary check files on target host"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ kisa_script_path }}"
+  ignore_errors: true

@@ -1,0 +1,23 @@
+---
+# U-05: root 이외의 UID '0' 금지
+# 기준: UID가 0인 계정은 오직 root 계정만 허용
+
+- name: "[U-05] Find non-root accounts with UID 0"
+  ansible.builtin.shell:
+    cmd: "awk -F: '($3 == 0) && ($1 != \"root\") {print $1}' /etc/passwd"
+  register: rogue_uid_zero_users
+  changed_when: false
+  failed_when: false
+  tags:
+    - U-05
+    - account
+
+- name: "[U-05] Fail or warn if rogue UID 0 accounts are discovered"
+  ansible.builtin.assert:
+    that:
+      - rogue_uid_zero_users.stdout == ""
+    fail_msg: "CRITICAL SECURITY WARNING: Non-root account with UID 0 detected: {{ rogue_uid_zero_users.stdout_lines }}"
+    success_msg: "Only 'root' has UID 0."
+  tags:
+    - U-05
+    - account

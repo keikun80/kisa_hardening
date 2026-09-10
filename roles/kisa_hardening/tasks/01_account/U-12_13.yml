@@ -1,0 +1,41 @@
+---
+# U-12: 세션 종료 시간 설정
+# 기준: TMOUT 600초(10분) 이하 설정
+
+- name: "[U-12] Deploy session timeout script in /etc/profile.d/ (Linux)"
+  ansible.builtin.template:
+    src: timeout.sh.j2
+    dest: /etc/profile.d/session_timeout.sh
+    owner: root
+    group: root
+    mode: '0644'
+  when: ansible_system != 'FreeBSD'
+  tags:
+    - U-12
+    - account
+    - timeout
+
+- name: "[U-12] Configure session timeout in /etc/profile (FreeBSD / Fallback)"
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    regexp: '^[#\s]*TMOUT='
+    line: "export TMOUT={{ session_timeout_seconds | default(600) }}"
+    state: present
+  tags:
+    - U-12
+    - account
+    - timeout
+
+# U-13: 안전한 비밀번호 암호화 알고리즘 사용
+# 기준: SHA512 (또는 SHA256) 사용
+- name: "[U-13] Set ENCRYPT_METHOD to SHA512 in /etc/login.defs (Linux)"
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^[#\s]*ENCRYPT_METHOD\s+.*'
+    line: "ENCRYPT_METHOD {{ password_hash_algorithm | default('SHA512') }}"
+    state: present
+  when: ansible_system != 'FreeBSD'
+  tags:
+    - U-13
+    - account
+    - crypto

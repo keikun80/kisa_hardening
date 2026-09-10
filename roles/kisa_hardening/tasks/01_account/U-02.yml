@@ -1,0 +1,57 @@
+---
+# U-02: 비밀번호 관리정책 설정 (복잡성)
+# 기준: minlen 8이상, 영어 대소문자/숫자/특수문자 중 3가지 이상 혼용
+
+- name: "[U-02] Ensure pam_pwquality package is installed (RedHat/Debian)"
+  ansible.builtin.package:
+    name: "{{ 'libpam-pwquality' if ansible_os_family == 'Debian' else 'pam_pwquality' }}"
+    state: present
+  when: ansible_system != 'FreeBSD'
+  ignore_errors: true
+  tags:
+    - U-02
+    - account
+    - password
+
+- name: "[U-02] Configure /etc/security/pwquality.conf (RedHat & Debian)"
+  ansible.builtin.template:
+    src: pwquality.conf.j2
+    dest: /etc/security/pwquality.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: "{{ backup_original_files | default(true) }}"
+  when: ansible_system != 'FreeBSD'
+  tags:
+    - U-02
+    - account
+    - password
+
+- name: "[U-02] Configure login.defs password policies (Linux)"
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} {{ item.val }}"
+    state: present
+  loop:
+    - { key: "PASS_MAX_DAYS", val: "90" }
+    - { key: "PASS_MIN_DAYS", val: "1" }
+    - { key: "PASS_MIN_LEN", val: "{{ password_min_length | default(8) }}" }
+    - { key: "PASS_WARN_AGE", val: "7" }
+  when: ansible_system != 'FreeBSD'
+  tags:
+    - U-02
+    - account
+    - password
+
+- name: "[U-02] FreeBSD login.conf password policy check"
+  ansible.builtin.lineinfile:
+    path: /etc/login.conf
+    regexp: '^[#\s]*:minpasswordlen='
+    line: "        :minpasswordlen={{ password_min_length | default(8) }}:\\"
+    state: present
+  when: ansible_system == 'FreeBSD'
+  tags:
+    - U-02
+    - account
+    - password

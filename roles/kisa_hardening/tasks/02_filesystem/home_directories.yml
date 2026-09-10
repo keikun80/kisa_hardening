@@ -1,0 +1,21 @@
+---
+# U-31: 홈 디렉토리 소유자 및 권한 설정 (755 이하, 타인 쓰기 금지)
+# U-32: 홈 디렉토리로 지정한 디렉토리의 존재 관리
+
+# U-31: 홈 디렉토리 권한을 750 또는 755로 제한 (기타 사용자 쓰기 권한 제거)
+- name: "[U-31] Secure home directories permissions (remove other-write)"
+  ansible.builtin.shell:
+    cmd: "chmod go-w /home/*"
+  changed_when: false
+  failed_when: false
+  ignore_errors: true
+  tags: [U-31, filesystem]
+
+# U-32: /etc/passwd에 등록된 일반 사용자의 홈 디렉토리 존재 확인
+- name: "[U-32] Check missing home directories for regular users"
+  ansible.builtin.shell:
+    cmd: "awk -F: '($3 >= 1000) && ($7 !~ /nologin|false/) {print $1, $6}' /etc/passwd | while read u d; do [ ! -d \"$d\" ] && echo \"User $u has missing home $d\"; done"
+  register: missing_home_dirs
+  changed_when: false
+  failed_when: false
+  tags: [U-32, filesystem]

@@ -1,0 +1,38 @@
+---
+# roles/kisa_hardening/handlers/main.yml
+
+- name: Restart sshd (Linux)
+  ansible.builtin.service:
+    name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
+    state: restarted
+  when: ansible_system != 'FreeBSD'
+
+- name: Restart sshd (FreeBSD)
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+  when: ansible_system == 'FreeBSD'
+
+- name: Restart chronyd
+  ansible.builtin.service:
+    name: "{{ ntp_service_name | default('chronyd') }}"
+    state: restarted
+  when: ansible_system != 'FreeBSD'
+
+- name: Restart ntpd (FreeBSD)
+  ansible.builtin.service:
+    name: ntpd
+    state: restarted
+  when: ansible_system == 'FreeBSD'
+
+- name: Restart rsyslog
+  ansible.builtin.service:
+    name: "{{ syslog_service_name | default('rsyslog') }}"
+    state: restarted
+  when: ansible_system != 'FreeBSD'
+
+- name: Restart syslogd (FreeBSD)
+  ansible.builtin.service:
+    name: syslogd
+    state: restarted
+  when: ansible_system == 'FreeBSD'

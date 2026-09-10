@@ -1,0 +1,46 @@
+---
+# U-15, U-23, U-25, U-26, U-33: 파일 시스템 무결성 및 특수 파일 점검
+
+# U-15: 소유자 없는 파일 점검
+- name: "[U-15] Check for files without owner (nouser/nogroup)"
+  ansible.builtin.command: "find /etc /var /usr /tmp -xdev \\( -nouser -o -nogroup \\) -print"
+  register: unowned_files
+  changed_when: false
+  failed_when: false
+  tags: [U-15, filesystem]
+
+# U-23: SUID/SGID 주요 취약 바이너리 점검 및 권한 제한
+- name: "[U-23] Remove SUID/SGID from unnecessary binaries if present"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: 'a-s'
+  loop:
+    - /usr/bin/rcp
+    - /usr/bin/rlogin
+    - /usr/bin/rsh
+  ignore_errors: true
+  tags: [U-23, filesystem]
+
+# U-25: World Writable 파일 점검
+- name: "[U-25] Check for world writable files in system directories"
+  ansible.builtin.command: "find /etc /bin /sbin /usr/bin /usr/sbin -xdev -perm -0002 -type f -print"
+  register: world_writable_files
+  changed_when: false
+  failed_when: false
+  tags: [U-25, filesystem]
+
+# U-26: /dev 디렉터리 내 일반 파일(non-device) 점검
+- name: "[U-26] Check for non-device regular files in /dev"
+  ansible.builtin.command: "find /dev -type f -print"
+  register: dev_regular_files
+  changed_when: false
+  failed_when: false
+  tags: [U-26, filesystem]
+
+# U-33: 숨김 파일 점검 (임시 디렉토리 내 비정상 숨김 파일)
+- name: "[U-33] Check suspicious hidden files in /tmp and /var/tmp"
+  ansible.builtin.command: "find /tmp /var/tmp -maxdepth 2 -name '.*' ! -name '.' ! -name '..' -print"
+  register: hidden_tmp_files
+  changed_when: false
+  failed_when: false
+  tags: [U-33, filesystem]

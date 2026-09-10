@@ -1,0 +1,86 @@
+---
+# U-16 ~ U-22, U-29: 중요 시스템 및 설정 파일 권한 및 소유자 설정
+
+# U-16: /etc/passwd 권한 644, 소유자 root
+- name: "[U-16] Secure /etc/passwd permissions (644, root:root)"
+  ansible.builtin.file:
+    path: /etc/passwd
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0644'
+  tags: [U-16, filesystem]
+
+# U-17: 시스템 시작 스크립트 권한 755 이하
+- name: "[U-17] Secure init / rc script directories permissions if present"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0755'
+    state: directory
+  loop:
+    - /etc/init.d
+    - /etc/rc.d
+  ignore_errors: true
+  tags: [U-17, filesystem]
+
+# U-18: /etc/shadow 권한 400 (또는 000), 소유자 root
+- name: "[U-18] Secure /etc/shadow or master.passwd permissions (0400, root:root)"
+  ansible.builtin.file:
+    path: "{{ '/etc/master.passwd' if ansible_system == 'FreeBSD' else '/etc/shadow' }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0400'
+  ignore_errors: true
+  tags: [U-18, filesystem]
+
+# U-19: /etc/hosts 권한 644 (또는 600), 소유자 root
+- name: "[U-19] Secure /etc/hosts permissions (644, root:root)"
+  ansible.builtin.file:
+    path: /etc/hosts
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0644'
+  tags: [U-19, filesystem]
+
+# U-20: /etc/xinetd.conf 또는 inetd.conf 권한 600, 소유자 root
+- name: "[U-20] Secure inetd / xinetd configuration permissions (600, root:root)"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0600'
+  loop:
+    - /etc/xinetd.conf
+    - /etc/inetd.conf
+  ignore_errors: true
+  tags: [U-20, filesystem]
+
+# U-21: /etc/rsyslog.conf 또는 syslog.conf 권한 644 (또는 640), 소유자 root
+- name: "[U-21] Secure syslog configuration file permissions (644, root:root)"
+  ansible.builtin.file:
+    path: "{{ syslog_config_file | default('/etc/rsyslog.conf') }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0644'
+  ignore_errors: true
+  tags: [U-21, filesystem]
+
+# U-22: /etc/services 권한 644, 소유자 root
+- name: "[U-22] Secure /etc/services permissions (644, root:root)"
+  ansible.builtin.file:
+    path: /etc/services
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0644'
+  tags: [U-22, filesystem]
+
+# U-29: /etc/hosts.lpd 권한 600, 소유자 root
+- name: "[U-29] Secure /etc/hosts.lpd permissions if exists (600, root:root)"
+  ansible.builtin.file:
+    path: /etc/hosts.lpd
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0600'
+  ignore_errors: true
+  tags: [U-29, filesystem]

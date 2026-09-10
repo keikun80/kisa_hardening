@@ -1,0 +1,34 @@
+---
+# 01. 계정 관리 (U-01 ~ U-13)
+
+- name: "[Domain: Account] Include U-01"
+  ansible.builtin.include_tasks: U-01.yml
+  tags: [U-01, account]
+
+- name: "[Domain: Account] Include U-02"
+  ansible.builtin.include_tasks: U-02.yml
+  tags: [U-02, account]
+
+- name: "[Domain: Account] Include U-03"
+  ansible.builtin.include_tasks: U-03.yml
+  tags: [U-03, account]
+
+- name: "[Domain: Account] Include U-04"
+  ansible.builtin.include_tasks: U-04.yml
+  tags: [U-04, account]
+
+- name: "[Domain: Account] Include U-05"
+  ansible.builtin.include_tasks: U-05.yml
+  tags: [U-05, account]
+
+- name: "[Domain: Account] Include U-06"
+  ansible.builtin.include_tasks: U-06.yml
+  tags: [U-06, account]
+
+- name: "[Domain: Account] Include U-07 ~ U-11"
+  ansible.builtin.include_tasks: U-07_11.yml
+  tags: [U-07, U-08, U-09, U-10, U-11, account]
+
+- name: "[Domain: Account] Include U-12 ~ U-13"
+  ansible.builtin.include_tasks: U-12_13.yml
+  tags: [U-12, U-13, account]

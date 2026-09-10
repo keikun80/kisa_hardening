@@ -1,0 +1,21 @@
+---
+# U-04: 비밀번호 파일 보호
+# 기준: /etc/passwd 두 번째 필드가 'x'로 되어 있고 /etc/shadow 파일 사용
+
+- name: "[U-04] Check /etc/shadow file existence"
+  ansible.builtin.stat:
+    path: "{{ '/etc/master.passwd' if ansible_system == 'FreeBSD' else '/etc/shadow' }}"
+  register: shadow_stat
+  tags:
+    - U-04
+    - account
+
+- name: "[U-04] Assert shadow password system is in place"
+  ansible.builtin.assert:
+    that:
+      - shadow_stat.stat.exists
+    fail_msg: "CRITICAL: Shadow password file does not exist!"
+    success_msg: "Shadow password file is present."
+  tags:
+    - U-04
+    - account

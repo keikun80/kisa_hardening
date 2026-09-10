@@ -1,0 +1,11 @@
+---
+# Debian 계열 (Ubuntu, Debian) 전용 변수
+
+os_package_manager: "apt"
+ntp_service_name: "chrony"
+ntp_config_file: "/etc/chrony/chrony.conf"
+syslog_service_name: "rsyslog"
+syslog_config_file: "/etc/rsyslog.conf"
+su_auth_group: "sudo"
+pwquality_config_file: "/etc/security/pwquality.conf"
+login_defs_path: "/etc/login.defs"

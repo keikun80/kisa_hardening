@@ -1,0 +1,39 @@
+---
+# U-27: r-command 사용 금지
+# U-28: 접속 IP 및 포트 제한
+
+# U-27: hosts.equiv 및 .rhosts 제거
+- name: "[U-27] Remove /etc/hosts.equiv if exists"
+  ansible.builtin.file:
+    path: /etc/hosts.equiv
+    state: absent
+  tags: [U-27, filesystem]
+
+- name: "[U-27] Remove root's .rhosts file if exists"
+  ansible.builtin.file:
+    path: /root/.rhosts
+    state: absent
+  tags: [U-27, filesystem]
+
+# U-28: /etc/hosts.deny 및 /etc/hosts.allow 관리
+- name: "[U-28] Ensure /etc/hosts.deny contains ALL: ALL if TCP Wrappers used"
+  ansible.builtin.lineinfile:
+    path: /etc/hosts.deny
+    line: "ALL: ALL"
+    create: true
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0644'
+  ignore_errors: true
+  tags: [U-28, filesystem]
+
+- name: "[U-28] Ensure localhost is allowed in /etc/hosts.allow"
+  ansible.builtin.lineinfile:
+    path: /etc/hosts.allow
+    line: "ALL: 127.0.0.1 : allow"
+    create: true
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0644'
+  ignore_errors: true
+  tags: [U-28, filesystem]

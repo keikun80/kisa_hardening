@@ -1,0 +1,10 @@
+---
+# 05. 로그 관리 (U-65 ~ U-67)
+
+- name: "[Domain: Log] Include U-65 NTP Time Sync"
+  ansible.builtin.include_tasks: U-65.yml
+  tags: [U-65, log, ntp]
+
+- name: "[Domain: Log] Include U-66 and U-67 Syslog & Log Permissions"
+  ansible.builtin.include_tasks: U-66_67.yml
+  tags: [U-66, U-67, log]

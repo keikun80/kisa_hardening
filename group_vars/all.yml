@@ -1,0 +1,38 @@
+---
+# KISA 취약점 조치 공통 기준 설정 (U-01 ~ U-67)
+
+# U-01: SSH 설정
+sshd_permit_root_login: "no"
+sshd_port: 22
+
+# U-02: 패스워드 복잡성
+password_min_length: 8
+password_min_digits: 1
+password_min_upper: 1
+password_min_lower: 1
+password_min_special: 1
+
+# U-03: 계정 잠금 임계값
+account_lockout_deny: 5
+account_lockout_unlock_time: 900
+account_lockout_fail_interval: 900
+
+# U-12: 세션 타임아웃 (초 단위: 600초 이하)
+session_timeout_seconds: 600
+
+# U-13: 암호화 알고리즘
+password_hash_algorithm: "SHA512"
+
+# U-30: 시스템 기본 UMASK
+system_umask: "022"
+
+# U-62: 법적 경고 메시지 배너
+legal_warning_banner: |
+  *******************************************************************************
+  * WARNING: Unauthorized access to this system is strictly prohibited and      *
+  * will be prosecuted to the maximum extent of the law. All activities are     *
+  * monitored and logged according to security policies.                        *
+  *******************************************************************************
+
+# U-65: AWS EC2 NTP 서버 (Amazon Time Sync Service)
+aws_ntp_server: "169.254.169.123"

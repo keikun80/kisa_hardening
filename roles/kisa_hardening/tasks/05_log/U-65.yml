@@ -1,0 +1,51 @@
+---
+# U-65: NTP 및 시각 동기화 설정
+# AWS EC2 환경: Amazon Time Sync Service (169.254.169.123) 동기화
+
+- name: "[U-65] Install chrony package (Linux)"
+  ansible.builtin.package:
+    name: chrony
+    state: present
+  when: ansible_system != 'FreeBSD'
+  ignore_errors: true
+  tags: [U-65, log, ntp]
+
+- name: "[U-65] Configure chrony with AWS Time Sync Server (Linux)"
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: "{{ ntp_config_file | default('/etc/chrony.conf') }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: "{{ backup_original_files | default(true) }}"
+  when: ansible_system != 'FreeBSD'
+  notify: Restart chronyd
+  tags: [U-65, log, ntp]
+
+- name: "[U-65] Ensure chrony service is enabled and running (Linux)"
+  ansible.builtin.service:
+    name: "{{ ntp_service_name | default('chronyd') }}"
+    state: started
+    enabled: true
+  when: ansible_system != 'FreeBSD'
+  tags: [U-65, log, ntp]
+
+- name: "[U-65] Configure FreeBSD ntpd with AWS Time Sync Server"
+  ansible.builtin.template:
+    src: ntp.conf.freebsd.j2
+    dest: /etc/ntp.conf
+    owner: root
+    group: wheel
+    mode: '0644'
+  when: ansible_system == 'FreeBSD'
+  notify: Restart ntpd (FreeBSD)
+  tags: [U-65, log, ntp]
+
+- name: "[U-65] Ensure FreeBSD ntpd is enabled in /etc/rc.conf"
+  ansible.builtin.lineinfile:
+    path: /etc/rc.conf
+    regexp: '^ntpd_enable='
+    line: 'ntpd_enable="YES"'
+    state: present
+  when: ansible_system == 'FreeBSD'
+  tags: [U-65, log, ntp]

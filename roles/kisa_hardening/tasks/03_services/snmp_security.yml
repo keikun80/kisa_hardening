@@ -1,0 +1,20 @@
+---
+# U-59, U-60, U-61: SNMP 서비스 보안 설정
+
+# U-60: 기본 Community String(public, private) 제거
+- name: "[U-60] Remove default community strings from snmpd.conf if present"
+  ansible.builtin.replace:
+    path: /etc/snmp/snmpd.conf
+    regexp: '^(com2sec.*)\b(public|private)\b'
+    replace: '# \1 default_string_removed'
+  ignore_errors: true
+  tags: [U-59, U-60, U-61, services, snmp]
+
+- name: "[U-61] Secure snmpd.conf file permissions (600, root:root)"
+  ansible.builtin.file:
+    path: /etc/snmp/snmpd.conf
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0600'
+  ignore_errors: true
+  tags: [U-61, services, snmp]

@@ -1,0 +1,28 @@
+---
+# U-06: 사용자 계정 su 기능 제한
+# 기준: pam_wheel.so 설정 활성화 및 wheel/sudo 그룹 멤버에게만 su 허용
+
+- name: "[U-06] Enable pam_wheel.so in /etc/pam.d/su (Linux)"
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/su
+    regexp: '^[#\s]*auth\s+required\s+pam_wheel\.so\s+use_uid'
+    line: 'auth            required        pam_wheel.so use_uid'
+    state: present
+    backup: "{{ backup_original_files | default(true) }}"
+  when: ansible_system != 'FreeBSD'
+  tags:
+    - U-06
+    - account
+    - su
+
+- name: "[U-06] Ensure authorized admin users belong to wheel/sudo group"
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: "{{ su_auth_group | default('wheel') }}"
+    append: true
+  loop: "{{ allowed_su_users | default(['ec2-user', 'ubuntu', 'rocky', 'fedora', 'centos', 'admin']) }}"
+  ignore_errors: true
+  tags:
+    - U-06
+    - account
+    - su
