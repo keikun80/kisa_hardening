@@ -1,6 +1,6 @@
-# 🛡️ AWS EC2 Linux/Unix KISA 취약점 점검 & 하드닝 Ansible 프로젝트
+# 🛡️ kisa_harden : AWS EC2 Linux/Unix KISA 취약점 점검 & 하드닝 Ansible 프로젝트
 
-한국인터넷진흥원(KISA) **2026 주요정보통신기반시설 기술적 취약점 분석·평가 방법 상세가이드 (U-01 ~ U-67)** 및 [`SHyoJun/linux-vulnerability-check`](https://github.com/SHyoJun/linux-vulnerability-check) 기준을 완벽하게 준수하는 **AWS EC2 다중 OS 보안 진단 및 자동 하드닝(조치) Ansible Playbook**입니다.
+한국인터넷진흥원(KISA) **2026 주요정보통신기반시설 기술적 취약점 분석·평가 방법 상세가이드 (U-01 ~ U-67)** 및 [`SHyoJun/linux-vulnerability-check`](https://github.com/SHyoJun/linux-vulnerability-check) 기준을 완벽하게 준수하는 **AWS EC2 다중 OS 보안 진단 및 자동 하드닝(조치) Ansible Playbook 프로젝트 (`kisa_harden`)**입니다.
 
 ---
 
@@ -20,14 +20,15 @@
 .
 ├── ansible.cfg                          # 실행 성능 및 출력 최적화 설정
 ├── inventory/
-│   └── hosts.ini                        # OS별 호스트 그룹 인벤토리
+│   ├── hosts.ini                        # OS별 호스트 그룹 인벤토리
+│   └── aws_ec2.yml                      # AWS EC2 동적 인벤토리 설정
 ├── group_vars/
 │   ├── all.yml                          # KISA 전역 보안 기준 파라미터 (임계값, 타임아웃 등)
 │   ├── redhat_family.yml                # RHEL, AL2023, Fedora, Rocky, CentOS 설정
 │   ├── debian_family.yml                # Ubuntu, Debian 설정
 │   └── freebsd.yml                      # FreeBSD 전용 설정
 ├── roles/
-│   ├── kisa_hardening/                  # [조치] 보안 하드닝 롤 (U-01 ~ U-67)
+│   ├── kisa_harden/                     # [조치] 보안 하드닝 롤 (U-01 ~ U-67)
 │   │   ├── defaults/main.yml
 │   │   ├── handlers/main.yml            # sshd, chrony, rsyslog 등 서비스 핸들러
 │   │   ├── tasks/
@@ -39,6 +40,8 @@
 │   │   │   └── 05_log/                  # U-65 ~ U-67 (로그/시간 동기화)
 │   │   └── templates/                   # motd, chrony, timeout, pwquality 등 템플릿
 │   └── kisa_audit/                      # [점검] 취약점 진단 및 리포트 자동 생성 롤
+├── scripts/
+│   └── generate_hosts_ini.py            # EC2 인스턴스 조회 기반 hosts.ini 자동 생성 도구
 ├── site.yml                             # 보안 하드닝(조치) 실행 플레이북
 ├── audit.yml                            # 보안 진단(점검) 실행 플레이북
 └── README.md                            # 사용 설명서
