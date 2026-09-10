@@ -34,3 +34,22 @@ restricted_system_users:
   - operator
   - games
   - gopher
+
+# U-23: SUID/SGID 권한 제거 대상 주요 위험 바이너리 목록
+risky_suid_binaries:
+  - /usr/bin/rcp
+  - /usr/bin/rlogin
+  - /usr/bin/rsh
+  - /usr/bin/rexec
+  - /usr/bin/traceroute
+  - /usr/sbin/traceroute
+  - /usr/sbin/dump
+  - /usr/sbin/restore
+  - /usr/bin/lpr
+  - /usr/bin/lprm
+  - /usr/bin/lpc
+  - /usr/sbin/lpc
+  - /usr/bin/lp
+  - /usr/bin/at
+  - /usr/bin/atq
+  - /usr/bin/atrm

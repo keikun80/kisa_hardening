@@ -14,10 +14,7 @@
   ansible.builtin.file:
     path: "{{ item }}"
     mode: 'a-s'
-  loop:
-    - /usr/bin/rcp
-    - /usr/bin/rlogin
-    - /usr/bin/rsh
+  loop: "{{ risky_suid_binaries }}"
   ignore_errors: true
   tags: [U-23, filesystem]
 

@@ -3,8 +3,30 @@
 # U-24: 사용자, 시스템 환경변수 파일 소유자 및 권한 설정
 # U-30: UMASK 설정 관리 (022)
 
-# U-14 & U-24: 시스템 환경변수 파일 권한 644 이하 및 root 소유
-- name: "[U-24] Secure system environment file permissions"
+# ==============================================================================
+# U-14: root 홈 디렉터리 권한 및 PATH 환경변수 안전화
+# ==============================================================================
+- name: "[U-14] Ensure root home directory has secure permissions (0700)"
+  ansible.builtin.file:
+    path: /root
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0700'
+  ignore_errors: true
+  tags: [U-14, filesystem]
+
+- name: "[U-14] Remove dangerous current directory (., ::) from PATH in /etc/profile"
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    regexp: '^(export\s+)?PATH=.*(\.:|::|:\.).*'
+    state: absent
+  ignore_errors: true
+  tags: [U-14, filesystem]
+
+# ==============================================================================
+# U-24: 시스템 및 root 환경변수 파일 소유자 및 권한 설정 (644 / 600 이하)
+# ==============================================================================
+- name: "[U-24] Secure system-wide environment files permissions (0644)"
   ansible.builtin.file:
     path: "{{ item }}"
     owner: root
@@ -16,10 +38,28 @@
     - /etc/bash.bashrc
     - /etc/csh.cshrc
     - /etc/csh.login
+    - /etc/environment
   ignore_errors: true
-  tags: [U-14, U-24, filesystem]
+  tags: [U-24, filesystem]
 
-# U-30: UMASK 설정
+- name: "[U-24] Secure root user environment files permissions (0600)"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+    mode: '0600'
+  loop:
+    - /root/.bashrc
+    - /root/.bash_profile
+    - /root/.profile
+    - /root/.cshrc
+    - /root/.tcshrc
+  ignore_errors: true
+  tags: [U-24, filesystem]
+
+# ==============================================================================
+# U-30: UMASK 설정 (022)
+# ==============================================================================
 - name: "[U-30] Configure UMASK 022 in /etc/profile"
   ansible.builtin.lineinfile:
     path: /etc/profile
@@ -47,4 +87,13 @@
     line: "UMASK           {{ system_umask | default('022') }}"
     state: present
   when: ansible_system != 'FreeBSD'
+  tags: [U-30, filesystem]
+
+- name: "[U-30] Configure UMASK 022 in /etc/csh.cshrc if present"
+  ansible.builtin.lineinfile:
+    path: /etc/csh.cshrc
+    regexp: '^[#\s]*umask\s+.*'
+    line: "umask {{ system_umask | default('022') }}"
+    state: present
+  ignore_errors: true
   tags: [U-30, filesystem]

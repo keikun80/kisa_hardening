@@ -16,24 +16,25 @@
   tags: [U-27, filesystem]
 
 # U-28: /etc/hosts.deny 및 /etc/hosts.allow 관리
-- name: "[U-28] Ensure /etc/hosts.deny contains ALL: ALL if TCP Wrappers used"
-  ansible.builtin.lineinfile:
-    path: /etc/hosts.deny
-    line: "ALL: ALL"
-    create: true
-    owner: root
-    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
-    mode: '0644'
-  ignore_errors: true
-  tags: [U-28, filesystem]
-
-- name: "[U-28] Ensure localhost is allowed in /etc/hosts.allow"
-  ansible.builtin.lineinfile:
-    path: /etc/hosts.allow
-    line: "ALL: 127.0.0.1 : allow"
-    create: true
-    owner: root
-    group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
-    mode: '0644'
-  ignore_errors: true
-  tags: [U-28, filesystem]
+# NOTE: 관리자 허용 IP 없이 ALL: ALL 적용 시 원격 접속 차단(Lockout) 위험이 있어 기본 비활성화(Block) 처리함
+# - name: "[U-28] Ensure /etc/hosts.deny contains ALL: ALL if TCP Wrappers used"
+#   ansible.builtin.lineinfile:
+#     path: /etc/hosts.deny
+#     line: "ALL: ALL"
+#     create: true
+#     owner: root
+#     group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+#     mode: '0644'
+#   ignore_errors: true
+#   tags: [U-28, filesystem]
+# 
+# - name: "[U-28] Ensure localhost is allowed in /etc/hosts.allow"
+#   ansible.builtin.lineinfile:
+#     path: /etc/hosts.allow
+#     line: "ALL: 127.0.0.1 : allow"
+#     create: true
+#     owner: root
+#     group: "{{ 'wheel' if ansible_system == 'FreeBSD' else 'root' }}"
+#     mode: '0644'
+#   ignore_errors: true
+#   tags: [U-28, filesystem]

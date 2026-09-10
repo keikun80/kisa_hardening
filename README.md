@@ -185,7 +185,7 @@ ansible-playbook -i inventory/hosts.ini site.yml -e "target_hosts=amazon_linux"
 | **U-14~22** | 파일 관리 | 중요 파일 소유자/권한 | `/etc/passwd`(644), `/etc/shadow`(400), `/etc/hosts`(644), `/etc/services`(644) (`--tags "filesystem"`) |
 | **U-23~26** | 파일 관리 | 특수 권한/소유자 없는 파일 | 비인가 SUID 제거, World Writable/장치 파일 점검 (`--tags "filesystem"`) |
 | **U-27** | 파일 관리 | r-command 금지 | `hosts.equiv`, `~/.rhosts` 파일 강제 삭제 (`--tags "U-27"`) |
-| **U-28** | 파일 관리 | 접속 IP/포트 제한 | `/etc/hosts.deny` (ALL: ALL) 및 hosts.allow 설정 (`--tags "U-28"`) |
+| **U-28** | 파일 관리 | 접속 IP/포트 제한 | 원격 차단 위험으로 기본 비활성화 (방화벽/수동 설정 권장) |
 | **U-29~33** | 파일 관리 | UMASK & 홈디렉터리 권한 | `UMASK 022` 강제, `/home/*` 타인 쓰기 권한 제거 (`--tags "U-30, U-31"`) |
 | **U-34~44** | 서비스 관리 | 불필요 레거시 서비스 비활성화 | finger, rsh, rlogin, NFS, autofs, rpcbind, tftp, talk 중지/마스킹 (`--tags "services"`) |
 | **U-45~51** | 서비스 관리 | 메일 및 DNS 보안 | Sendmail `restrictqrun`, DNS `allow-transfer { none; };` 적용 (`--tags "services"`) |
