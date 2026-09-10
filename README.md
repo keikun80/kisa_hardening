@@ -1,6 +1,6 @@
 # 🛡️ kisa_harden : AWS EC2 Linux/Unix KISA 취약점 점검 & 하드닝 Ansible 프로젝트
 
-한국인터넷진흥원(KISA) **2026 주요정보통신기반시설 기술적 취약점 분석·평가 방법 상세가이드 (U-01 ~ U-67)** 및 [`SHyoJun/linux-vulnerability-check`](https://github.com/SHyoJun/linux-vulnerability-check) 기준을 완벽하게 준수하는 **AWS EC2 다중 OS 보안 진단 및 자동 하드닝(조치) Ansible Playbook 프로젝트 (`kisa_harden`)**입니다.
+한국인터넷진흥원(KISA) **2026 주요정보통신기반시설 기술적 취약점 분석·평가 방법 상세가이드 (U-01 ~ U-67)** 및 [`SHyoJun/linux-vulnerability-check`](https://github.com/SHyoJun/linux-vulnerability-check) 기준을 완벽하게 준수하는 **AWS EC2 다중 OS 보안 진단(Audit) 및 자동 하드닝(Remediation) Ansible Playbook 프로젝트 (`kisa_harden`)**입니다.
 
 ---
 
@@ -18,18 +18,18 @@
 
 ```text
 .
-├── ansible.cfg                          # 실행 성능 및 출력 최적화 설정
+├── ansible.cfg                          # 실행 성능, SSH 접속 및 출력 최적화 설정
 ├── inventory/
-│   ├── hosts.ini                        # OS별 호스트 그룹 인벤토리
-│   └── aws_ec2.yml                      # AWS EC2 동적 인벤토리 설정
+│   ├── hosts.ini                        # OS별 호스트 그룹 정적 인벤토리
+│   └── aws_ec2.yml                      # AWS EC2 동적 인벤토리 (Dynamic Inventory) 설정
 ├── group_vars/
 │   ├── all.yml                          # KISA 전역 보안 기준 파라미터 (임계값, 타임아웃 등)
 │   ├── redhat_family.yml                # RHEL, AL2023, Fedora, Rocky, CentOS 설정
 │   ├── debian_family.yml                # Ubuntu, Debian 설정
 │   └── freebsd.yml                      # FreeBSD 전용 설정
 ├── roles/
-│   ├── kisa_harden/                     # [조치] 보안 하드닝 롤 (U-01 ~ U-67)
-│   │   ├── defaults/main.yml
+│   ├── kisa_harden/                     # [조치] 보안 하드닝 롤 (U-01 ~ U-67 자동 조치)
+│   │   ├── defaults/main.yml            # 도메인별 활성화 플래그 및 기본값
 │   │   ├── handlers/main.yml            # sshd, chrony, rsyslog 등 서비스 핸들러
 │   │   ├── tasks/
 │   │   │   ├── main.yml                 # 5대 도메인 오케스트레이션
@@ -40,19 +40,66 @@
 │   │   │   └── 05_log/                  # U-65 ~ U-67 (로그/시간 동기화)
 │   │   └── templates/                   # motd, chrony, timeout, pwquality 등 템플릿
 │   └── kisa_audit/                      # [점검] 취약점 진단 및 리포트 자동 생성 롤
+│       ├── defaults/main.yml
+│       ├── files/                       # 진단 쉘 스크립트
+│       └── tasks/main.yml               # 진단 실행 및 ./reports/ 마크다운 리포트 수집
 ├── scripts/
 │   └── generate_hosts_ini.py            # EC2 인스턴스 조회 기반 hosts.ini 자동 생성 도구
 ├── site.yml                             # 보안 하드닝(조치) 실행 플레이북
 ├── audit.yml                            # 보안 진단(점검) 실행 플레이북
-└── README.md                            # 사용 설명서
+└── README.md                            # 프로젝트 가이드 및 사용 설명서
 ```
+
+---
+
+## 🛠️ 사전 준비 및 플레이스홀더(`<YOUR_...>`) 설정 가이드
+
+플레이북을 실행하기 전, [`ansible.cfg`](file:///home/keikun/project/ansible/ansible.cfg) 및 인벤토리 파일에 정의된 플레이스홀더(`<YOUR_...>` 형태의 자리표시자)를 실제 사용자 환경에 맞추어 반드시 수정해야 합니다.
+
+### 📌 `ansible.cfg` 플레이스홀더 상세 안내
+
+[`ansible.cfg`](file:///home/keikun/project/ansible/ansible.cfg) 파일 7~8번 라인에 있는 플레이스홀더 항목은 다음과 같습니다:
+
+```ini
+[defaults]
+inventory = ./inventory/hosts.ini
+roles_path = ./roles
+host_key_checking = False
+...
+remote_user = <YOUR_SSH_USER>
+private_key_file = <YOUR_SSH_KEY_PATH>
+```
+
+| 플레이스홀더 | 권장/예시 값 | 상세 설명 및 설정 가이드 |
+|---|---|---|
+| `<YOUR_SSH_USER>` | `ec2-user` 또는 `ubuntu` | • Ansible이 원격 EC2 인스턴스에 SSH로 접속할 때 사용할 **기본 사용자 계정명**입니다.<br>• OS별로 기본 접속 계정이 다를 경우 인벤토리(`hosts.ini` 또는 `aws_ec2.yml`)에 명시된 `ansible_user`가 우선 적용되므로, 여기에는 가장 많이 사용하는 대표 기본 계정(예: `ec2-user`)을 입력합니다. |
+| `<YOUR_SSH_KEY_PATH>` | `~/.ssh/my-aws-key.pem` | • AWS EC2 인스턴스 접속에 필요한 **SSH 개인 키(Private Key, `.pem` 또는 `.id_rsa`) 파일의 로컬 경로**입니다.<br>• 절대 경로(`~/.ssh/id_rsa`, `/home/user/.ssh/my-key.pem`) 또는 프로젝트 기준 상대 경로로 입력합니다.<br>• ⚠️ **보안 주의**: 키 파일 권한은 반드시 `chmod 400 <키경로>` 로 설정되어 있어야 SSH 연결 거부를 방지할 수 있습니다. |
+
+#### 📝 설정 예시 (`ansible.cfg`)
+```ini
+[defaults]
+inventory = ./inventory/hosts.ini
+roles_path = ./roles
+host_key_checking = False
+remote_user = ec2-user
+private_key_file = ~/.ssh/my-aws-key.pem
+```
+
+> [!TIP]
+> **AWS OS별 기본 SSH 사용자 계정:**
+> - **Amazon Linux 2023 / RHEL / FreeBSD**: `ec2-user`
+> - **Ubuntu**: `ubuntu`
+> - **Debian**: `admin` (또는 `debian`)
+> - **Rocky Linux**: `rocky`
+> - **CentOS**: `centos`
+> - **Fedora**: `fedora`
 
 ---
 
 ## ⚙️ 인벤토리 구성 방법 (2가지 방식)
 
 ### 방식 1. 스크립트로 `hosts.ini` 자동 생성 (가장 간편한 방법) 🌟
-제공된 [scripts/generate_hosts_ini.py](file:///home/keikun/project/ansible/scripts/generate_hosts_ini.py)를 실행하여 AWS EC2에서 실행 중인 인스턴스를 실시간으로 조회하고 `hosts.ini`를 자동 생성합니다.
+제공된 [scripts/generate_hosts_ini.py](file:///home/keikun/project/ansible/scripts/generate_hosts_ini.py)를 실행하여 AWS EC2에서 실행 중인 인스턴스를 실시간으로 조회하고 `inventory/hosts.ini`를 자동 생성합니다.
 
 ```bash
 # 기본 실행 (ap-northeast-2 리전, 프라이빗 IP 기준)
@@ -67,7 +114,7 @@ python3 scripts/generate_hosts_ini.py --region ap-northeast-2 --public-ip
 ---
 
 ### 방식 2. Ansible AWS EC2 동적 인벤토리 (Dynamic Inventory)
-파일을 수동으로 생성할 필요 없이 Ansible이 AWS API를 통해 실시간으로 인스턴스 목록을 가져와 실행합니다.
+정적 파일 생성 없이 Ansible이 AWS API를 통해 실시간으로 인스턴스 목록을 조회하여 실행합니다.
 
 ```bash
 # 1. amazon.aws 컬렉션 및 boto3 설치 (최초 1회)
@@ -82,8 +129,14 @@ ansible-playbook -i inventory/aws_ec2.yml site.yml
 
 ## 💡 사용 방법 (Usage)
 
+### 0. 호스트 연결 테스트 (Ping)
+플레이북 실행 전 모든 대상 서버와의 SSH 연결 상태를 확인합니다.
+```bash
+ansible all -m ping
+```
+
 ### 1. 보안 진단 (Audit Mode) - 시스템 변경 없이 취약점 점검
-대상 서버의 취약점 상태를 점검하고 `./reports/` 디렉토리에 마크다운 진단 보고서를 생성합니다.
+대상 서버의 취약점 상태를 진단하고 `./reports/` 디렉토리에 마크다운 형식의 결과 보고서를 자동 생성합니다.
 ```bash
 ansible-playbook -i inventory/hosts.ini audit.yml
 ```
@@ -104,17 +157,14 @@ ansible-playbook -i inventory/hosts.ini site.yml --tags "U-01"
 # 계정 관리(U-01 ~ U-13) 영역만 일괄 실행
 ansible-playbook -i inventory/hosts.ini site.yml --tags "account"
 
+# 파일 시스템 관리(U-14 ~ U-33) 영역만 실행
+ansible-playbook -i inventory/hosts.ini site.yml --tags "filesystem"
+
 # 시간 동기화(U-65: AWS NTP) 및 로그 관리만 실행
 ansible-playbook -i inventory/hosts.ini site.yml --tags "log"
 
-### 4. Python 3.14 설치 및 업그레이드 (선택 사항)
-대상 서버들에 Python 3.14 및 최신 pip 환경을 안전하게 컴파일/설치합니다 (`altinstall` 방식을 사용하여 시스템 기본 패키지 관리자 충돌 방지).
-```bash
-# 전체 호스트에 Python 3.14 설치
-ansible-playbook -i inventory/hosts.ini upgrade_python.yml
-
-# 특정 호스트/그룹에만 설치
-ansible-playbook -i inventory/hosts.ini upgrade_python.yml -e "target_hosts=amazon_linux"
+# 특정 호스트 그룹(예: amazon_linux)에만 실행
+ansible-playbook -i inventory/hosts.ini site.yml -e "target_hosts=amazon_linux"
 ```
 
 ---
