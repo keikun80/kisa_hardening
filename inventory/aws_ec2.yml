@@ -37,10 +37,15 @@ keyed_groups:
 # OS별 기본 SSH 접속 사용자 자동 매핑
 compose:
   ansible_host: private_ip_address | default(public_ip_address)
-  ansible_user: >
-    (tags.OS | default('') | lower in ['ubuntu']) | ternary('ubuntu',
-    (tags.OS | default('') | lower in ['debian']) | ternary('admin',
-    (tags.OS | default('') | lower in ['fedora']) | ternary('fedora',
-    (tags.OS | default('') | lower in ['rocky']) | ternary('rocky',
-    (tags.OS | default('') | lower in ['centos']) | ternary('centos',
-    (tags.OS | default('') | lower in ['freebsd']) | ternary('ec2-user', 'ec2-user'))))))
+  ansible_user: >-
+    {%- set os = (tags.OS | default(tags.os | default(''))) | lower -%}
+    {%- if 'ubuntu' in os -%}ubuntu
+    {%- elif 'debian' in os -%}admin
+    {%- elif 'fedora' in os -%}fedora
+    {%- elif 'rocky' in os -%}rocky
+    {%- elif 'centos' in os -%}centos
+    {%- elif 'amazon' in os or 'al2023' in os or 'amzn' in os -%}ec2-user
+    {%- elif 'rhel' in os or 'redhat' in os -%}ec2-user
+    {%- elif 'freebsd' in os -%}ec2-user
+    {%- else -%}ec2-user
+    {%- endif -%}
