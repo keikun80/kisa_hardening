@@ -35,6 +35,7 @@
   ansible.builtin.copy:
     content: |
       # KISA 취약점 점검 결과 보고서 (호스트: {{ inventory_hostname }})
+      - 호스트 IP: {{ ansible_host | default(ansible_default_ipv4.address | default('N/A')) }}
       - 점검 일시: {{ ansible_date_time.iso8601 | default('N/A') }}
       - 대상 OS: {{ ansible_distribution }} {{ ansible_distribution_version }} ({{ ansible_os_family }})
       - 커널 버전: {{ ansible_kernel }}

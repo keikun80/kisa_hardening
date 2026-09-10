@@ -1,4 +1,4 @@
 ---
 # roles/kisa_audit/defaults/main.yml
-audit_report_dest: "./reports/kisa_audit_report_{{ inventory_hostname }}_{{ ansible_date_time.date | default('latest') }}.md"
 kisa_script_path: "/tmp/vulnerability_check_sh.sh"
+audit_report_dest: "./reports/kisa_audit_report_{{ inventory_hostname }}_{{ ansible_host | default(ansible_default_ipv4.address | default(inventory_hostname)) }}_{{ ansible_date_time.date | default('date') }}_{{ (ansible_date_time.time | default('000000')) | replace(':', '') }}.md"
