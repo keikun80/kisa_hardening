@@ -1,0 +1,171 @@
+---
+# ==============================================================================
+# Python 3.14 설치 및 업그레이드 플레이북 (upgrade_python.yml)
+# 대상: Amazon Linux 2023, Fedora, RHEL, Rocky, CentOS, Debian, Ubuntu, FreeBSD
+# 환경: AWS EC2
+# ==============================================================================
+
+- name: Install and Upgrade Python to 3.14 on Target Hosts
+  hosts: "{{ target_hosts | default('all') }}"
+  become: true
+  gather_facts: true
+
+  vars:
+    python_target_version: "3.14.0"
+    python_download_url: "https://www.python.org/ftp/python/{{ python_target_version }}/Python-{{ python_target_version }}.tar.xz"
+    python_src_dir: "/usr/local/src/Python-{{ python_target_version }}"
+    python_install_prefix: "/usr/local"
+    set_as_default_python3: false  # 시스템 패키지 매니저(dnf/apt) 안정성을 위해 기본값 false
+
+  tasks:
+    # --------------------------------------------------------------------------
+    # 1. 현재 Python 3.14 설치 여부 사전 확인
+    # --------------------------------------------------------------------------
+    - name: Check if Python 3.14 is already installed
+      ansible.builtin.command: "{{ python_install_prefix }}/bin/python3.14 --version"
+      register: existing_python314
+      changed_when: false
+      failed_when: false
+
+    # --------------------------------------------------------------------------
+    # 2. OS별 빌드 필수 의존성 패키지 설치
+    # --------------------------------------------------------------------------
+    - name: Install build dependencies (RedHat Family / AL2023 / Fedora / Rocky)
+      ansible.builtin.dnf:
+        name:
+          - gcc
+          - make
+          - openssl-devel
+          - bzip2-devel
+          - libffi-devel
+          - zlib-devel
+          - readline-devel
+          - sqlite-devel
+          - xz
+          - xz-devel
+          - tar
+          - wget
+        state: present
+        update_cache: true
+      when:
+        - ansible_os_family == 'RedHat'
+        - existing_python314.rc != 0
+      ignore_errors: true
+
+    - name: Install build dependencies (Debian / Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - build-essential
+          - libssl-dev
+          - zlib1g-dev
+          - libbz2-dev
+          - libreadline-dev
+          - libsqlite3-dev
+          - wget
+          - curl
+          - llvm
+          - libncurses5-dev
+          - libncursesw5-dev
+          - xz-utils
+          - tk-dev
+          - libffi-dev
+          - liblzma-dev
+          - tar
+        state: present
+        update_cache: true
+      when:
+        - ansible_os_family == 'Debian'
+        - existing_python314.rc != 0
+      ignore_errors: true
+
+    - name: Install Python 3.14 or dependencies (FreeBSD)
+      ansible.builtin.package:
+        name:
+          - lang/python314
+          - gcc
+          - gmake
+        state: present
+      when:
+        - ansible_system == 'FreeBSD'
+      ignore_errors: true
+
+    # --------------------------------------------------------------------------
+    # 3. 소스 다운로드 및 컴파일 (Linux 계열)
+    # --------------------------------------------------------------------------
+    - name: Create source directory
+      ansible.builtin.file:
+        path: /usr/local/src
+        state: directory
+        mode: '0755'
+      when:
+        - ansible_system != 'FreeBSD'
+        - existing_python314.rc != 0
+
+    - name: Download Python 3.14 source tarball
+      ansible.builtin.get_url:
+        url: "{{ python_download_url }}"
+        dest: "/usr/local/src/Python-{{ python_target_version }}.tar.xz"
+        mode: '0644'
+        timeout: 60
+      when:
+        - ansible_system != 'FreeBSD'
+        - existing_python314.rc != 0
+
+    - name: Extract Python 3.14 source
+      ansible.builtin.unarchive:
+        src: "/usr/local/src/Python-{{ python_target_version }}.tar.xz"
+        dest: /usr/local/src/
+        remote_src: true
+      when:
+        - ansible_system != 'FreeBSD'
+        - existing_python314.rc != 0
+
+    - name: Configure, Build and Install Python 3.14 (altinstall)
+      ansible.builtin.shell: |
+        cd {{ python_src_dir }}
+        ./configure --prefix={{ python_install_prefix }} --enable-optimizations --with-ensurepip=install
+        make -j $(nproc)
+        make altinstall
+      args:
+        creates: "{{ python_install_prefix }}/bin/python3.14"
+      when:
+        - ansible_system != 'FreeBSD'
+        - existing_python314.rc != 0
+
+    # --------------------------------------------------------------------------
+    # 4. Pip 최신화 및 심볼릭 링크 / 검증
+    # --------------------------------------------------------------------------
+    - name: Upgrade pip for Python 3.14
+      ansible.builtin.command: "{{ python_install_prefix }}/bin/python3.14 -m pip install --upgrade pip"
+      when: ansible_system != 'FreeBSD'
+      changed_when: true
+      ignore_errors: true
+
+    - name: Create symlink for pip3.14
+      ansible.builtin.file:
+        src: "{{ python_install_prefix }}/bin/pip3.14"
+        dest: /usr/local/bin/pip3.14
+        state: link
+      when: ansible_system != 'FreeBSD'
+      ignore_errors: true
+
+    - name: Set python3.14 as default python3 (Optional)
+      ansible.builtin.file:
+        src: "{{ python_install_prefix }}/bin/python3.14"
+        dest: /usr/local/bin/python3
+        state: link
+      when:
+        - set_as_default_python3 | bool
+        - ansible_system != 'FreeBSD'
+
+    # --------------------------------------------------------------------------
+    # 5. 설치 결과 검증
+    # --------------------------------------------------------------------------
+    - name: Verify installed Python 3.14 version
+      ansible.builtin.command: "{{ python_install_prefix }}/bin/python3.14 --version"
+      register: final_python_version
+      changed_when: false
+
+    - name: Display Python 3.14 version
+      ansible.builtin.debug:
+        msg: "Successfully installed / verified: {{ final_python_version.stdout }}"

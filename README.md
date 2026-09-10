@@ -107,8 +107,14 @@ ansible-playbook -i inventory/hosts.ini site.yml --tags "account"
 # 시간 동기화(U-65: AWS NTP) 및 로그 관리만 실행
 ansible-playbook -i inventory/hosts.ini site.yml --tags "log"
 
-# 불필요 서비스 비활성화(U-34 ~ U-63) 영역만 실행
-ansible-playbook -i inventory/hosts.ini site.yml --tags "services"
+### 4. Python 3.14 설치 및 업그레이드 (선택 사항)
+대상 서버들에 Python 3.14 및 최신 pip 환경을 안전하게 컴파일/설치합니다 (`altinstall` 방식을 사용하여 시스템 기본 패키지 관리자 충돌 방지).
+```bash
+# 전체 호스트에 Python 3.14 설치
+ansible-playbook -i inventory/hosts.ini upgrade_python.yml
+
+# 특정 호스트/그룹에만 설치
+ansible-playbook -i inventory/hosts.ini upgrade_python.yml -e "target_hosts=amazon_linux"
 ```
 
 ---
