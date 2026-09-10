@@ -13,6 +13,8 @@
   ansible.builtin.command:
     cmd: "sh {{ kisa_script_path }}"
   register: audit_execution_output
+  async: 600      # 최대 10분(600초)까지 비동기 대기 허용
+  poll: 5         # 5초마다 완료 여부 확인
   changed_when: false
   failed_when: false
 
