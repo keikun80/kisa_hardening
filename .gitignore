@@ -1,0 +1,40 @@
+# ==============================================================================
+# Ansible & Security .gitignore
+# ==============================================================================
+
+# Private Keys & AWS Credentials
+*.pem
+*.key
+*.id_rsa
+*.rsa
+.vault_pass
+vault_password.txt
+
+# Audit & Vulnerability Diagnosis Reports (민감 보안 진단 결과)
+reports/
+*.tmp
+vulnerability_report_*.txt
+vulnerability_detailed_report_*.txt
+
+# Ansible Temp & Runtime Files
+*.retry
+*.log
+.ansible/
+facts_cache/
+
+# Python Cache & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# OS & Editor Metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
